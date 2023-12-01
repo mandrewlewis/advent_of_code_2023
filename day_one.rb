@@ -5,6 +5,16 @@ SAMPLE_INPUT = %w[
   treb7uchet
 ].freeze
 
+SAMPLE_INPUT2 = %w[
+  two1nine
+  eightwothree
+  abcone2threexyz
+  xtwone3four
+  4nineeightseven2
+  zoneight234
+  7pqrstsixteen
+].freeze
+
 MY_INPUT = %w[
   7jlncfksix7rjgrpglmn9
   vcgkgxninerqjltdbhqzzpd4nine23
@@ -1008,17 +1018,34 @@ MY_INPUT = %w[
   fivekltdkmm3rdmdnm32nineddsfdzpks
 ].freeze
 
+NUMBERS = %w[1 2 3 4 5 6 7 8 9].freeze
+STRINGED_NUMBERS = %w[one two three four five six seven eight nine].freeze
+
 def calibrate(input)
   sum = 0
 
   input.each do |string|
-    numbers = string.chars.select { |char| char =~ /[0-9]/ }
-    value = [numbers[0], numbers[-1]].join('').to_i
-    sum += value
+    @values = []
+
+    populate_values(string, NUMBERS)
+    populate_values(string, STRINGED_NUMBERS)
+
+    @values.compact!
+    calibrated_value = [@values[0], @values[-1]].join('').to_i
+
+    sum += calibrated_value
   end
 
   sum
 end
 
-p calibrate(SAMPLE_INPUT)
+def populate_values(string, array)
+  array.each_with_index do |num, i|
+    substr_indexs = (0...string.length).find_all { |index| string[index, num.length] == num }
+    substr_indexs.each { |sub_index| @values[sub_index] = (i + 1).to_s }
+  end
+end
+
+# p calibrate(SAMPLE_INPUT)
+# p calibrate(SAMPLE_INPUT2)
 p calibrate(MY_INPUT)
