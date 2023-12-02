@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 SAMPLE_INPUT = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
 Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
 ".freeze
-
 MY_INPUT = "Game 1: 10 red, 7 green, 3 blue; 5 blue, 3 red, 10 green; 4 blue, 14 green, 7 red; 1 red, 11 green; 6 blue, 17 green, 15 red; 18 green, 7 red, 5 blue
 Game 2: 13 green, 10 red; 11 green, 1 blue, 7 red; 5 red, 12 green, 1 blue; 12 green, 6 red; 8 green, 5 red; 12 green, 1 red
 Game 3: 7 green, 1 blue; 1 blue, 3 green, 1 red; 1 green, 1 blue; 2 green; 1 blue, 7 green, 2 red; 2 green
@@ -107,61 +108,50 @@ Game 99: 6 blue, 3 green, 5 red; 3 green, 6 red, 8 blue; 3 green, 11 blue, 14 re
 Game 100: 16 red, 3 blue; 2 red, 5 green; 9 red; 1 blue, 3 green, 10 red; 1 red, 5 blue, 3 green; 12 blue, 9 red
 ".freeze
 
-PART_ONE_PARAMS = { red: 12, green: 13, blue: 14 }.freeze
+PART_ONE_PARAMS = { r: 12, g: 13, b: 14 }.freeze
 
 # AoC Day2
 class Day2
-  def compute(input)
+  def compute(input, part2: false)
     @games = []
     @indexes = []
-
-    clean_input(input)
-    p @games
-    @games.each_with_index do |game, index|
-      valid_colors = []
-      PART_ONE_PARAMS.each { |color, blocks| valid_colors.push(color.to_s) if game[color].max <= blocks }
-      @indexes.push(index + 1) if valid_colors.length == 3
-    end
-
-    @indexes.sum
-  end
-
-  def compute2(input)
-    @games = []
     @powers = []
 
     clean_input(input)
-
-    @games.each do |game|
-      power = nil
-      game.each { |_, rounds| power = power.nil? ? rounds.max : power * rounds.max }
-      @powers.push(power)
-    end
-
-    @powers.sum
+    part2 ? sum_of_powers : sum_of_indexes
   end
 
   private
 
   def clean_input(input)
     input.each_line do |line|
-      game = { red: [], green: [], blue: [] }
-      _, arr_b = line.split(': ')
-
-      rounds = arr_b.split('; ')
-      rounds.each do |round|
-        colors = round.split(', ')
-        colors.each { |color| game[color.split(' ')[1].to_sym].push(color.split(' ')[0].to_i) }
-      end
-
-      @games << game
+      game_maxes = { r: [], g: [], b: [] }
+      color_nums = line.scan(/\d+\s[rgb]/) # ["3 g", "15 r", ...]
+      color_nums.each { |str| game_maxes[str[-1].to_sym].push(str[0...-2].to_i) }
+      @games << game_maxes.transform_values(&:max)
     end
+  end
+
+  def sum_of_indexes
+    @games.each_with_index do |game, index|
+      @indexes.push(index + 1) if game.all? { |color, num| PART_ONE_PARAMS[color] >= num }
+    end
+    @indexes.sum
+  end
+
+  def sum_of_powers
+    @games.each do |game|
+      power = 1
+      game.each { |_, blocks| power *= blocks }
+      @powers.push(power)
+    end
+    @powers.sum
   end
 end
 
 day2 = Day2.new
 # p day2.compute(SAMPLE_INPUT)
-# p day2.compute(MY_INPUT)
+p day2.compute(MY_INPUT) # 2207
 
-# p day2.compute2(SAMPLE_INPUT)
-p day2.compute2(MY_INPUT)
+# p day2.compute(SAMPLE_INPUT, part2: true)
+p day2.compute(MY_INPUT, part2: true) # 62241

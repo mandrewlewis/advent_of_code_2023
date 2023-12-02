@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 SAMPLE_INPUT = %w[
   1abc2
   pqr3stu8vwx
