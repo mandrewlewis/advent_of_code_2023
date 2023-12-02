@@ -126,6 +126,21 @@ class Day2
     @indexes.sum
   end
 
+  def compute2(input)
+    @games = []
+    @powers = []
+
+    clean_input(input)
+
+    @games.each do |game|
+      power = nil
+      game.each { |_, rounds| power = power.nil? ? rounds.max : power * rounds.max }
+      @powers.push(power)
+    end
+
+    @powers.sum
+  end
+
   private
 
   def clean_input(input)
@@ -145,5 +160,8 @@ class Day2
 end
 
 day2 = Day2.new
-p day2.compute(SAMPLE_INPUT)
+# p day2.compute(SAMPLE_INPUT)
 # p day2.compute(MY_INPUT)
+
+# p day2.compute2(SAMPLE_INPUT)
+p day2.compute2(MY_INPUT)
