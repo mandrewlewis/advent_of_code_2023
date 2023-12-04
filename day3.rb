@@ -14,7 +14,7 @@ SAMPLE_INPUT =
 "
 
 MY_INPUT =
-".....489............................152....503.........................180......200.........147.......13.......................239..........
+  ".....489............................152....503.........................180......200.........147.......13.......................239..........
 ......*.....186.48....681...732........*..................935.........*.....................*......................512............*..874....
 ..806.540......*.........*............249......904...358....*......957..867..863..........857.....264..............@....89=......97..*......
 ......................793........................*...=.....142...........*..*....%...................@......+...............36.......547....
@@ -168,189 +168,64 @@ PROBLEMS =
 ...........................................................-.........................../...........................................@........
 "
 
-# 3
-# 33
-# 2
-
 # AoC: Day 3
 class Day3
   def initialize
+    @tracked = []
     @nums = []
   end
 
   def decode(input)
     @lines = input.split("\n")
-    p @lines
-    sleep(300)
-    @lines.each_with_index { |_, index| get_numbers(index) }
+    @lines.each_with_index { |line, index| parse_line(line, index) }
+    numbers = @tracked.select { |obj| obj[:type] == 'number' }
+    determine_validity(numbers)
+
     @nums.sum
   end
 
   private
 
-  def get_numbers(index)
-    return if index.zero?
-    three_lines = [
-      index.zero? ? nil : @lines[index - 1],
-      @lines[index],
-      index == @lines.length - 1 ? nil : @lines[index + 1]
-    ]
-
-    numbers = three_lines[1].scan(/[0-9]+/)
-    # numbers.map! { |num| [num, three_lines[1].index(num)] }
-    indexed_numbers = []
-    numbers.each do |num|
-      prev = indexed_numbers.empty? ? nil : indexed_numbers[-1]
-      start = prev ? prev[1] + prev[0].length : 0
-      removed = prev ? three_lines[1][0...start].length : 0
-
-      index_in_line = three_lines[1][start..].index(num) + removed
-      indexed_numbers << [num, index_in_line]
-    end
-    # sleep(10)
-    check_for_symbols(indexed_numbers, three_lines, index)
-  end
-
-  def check_for_symbols(numbers, three_lines, index)
-    numbers.each do |num|
-      range = [
-        [num[1] - 1, 0].max,
-        [num[1] + num[0].length, three_lines[1].length - 1].min
-      ]
-      touch_symbols = []
-      valid = false
-
-
-      # puts '', '----------'
-      three_lines.each do |line|
-        next if line.nil? || valid
-
-        scans = line[range[0]..range[1]].scan(/[^0-9\.]/)
-        touch_symbols << scans
-        # puts "#{line[range[0]..range[1]]}  # #{scans}"
-      end
-      # puts touch_symbols.flatten.empty? ? '            -X-X-X-X-X-X-' : "      add (#{num[0]})"
-      # sleep(1)
-      if touch_symbols.flatten.empty? # ////////////////////////
-        puts '', '----------'
-        three_lines.each do |line|
-          next if line.nil?
-          puts "#{line[range[0]..range[1]]}"
-        end
+  def parse_line(line, line_index)
+    point = 0
+    until point > line.length - 1
+      if line[point] == '.'
+        point += 1
+        next
       end
 
+      char = { type: 'symbol', value: line[point], line: line_index, start: point, end: point }
+      if line[point] =~ /\d/
+        value = get_full_num(line, point)
+        char[:value] = value
+        char[:type] = 'number'
+        char[:end] = point + value.length - 1
+        point = char[:end]
+      end
 
-      @nums << num[0].to_i unless touch_symbols.flatten.empty?
-      delete_num(num, index)
+      @tracked << char
+      point += 1
     end
   end
 
-  def delete_num(num, index)
-    p @lines[index]
-    @lines[index][num[1], num[0].length] = '.' * num[0].length
-    p @lines[index]
-    # sleep(1)
+  def get_full_num(line, point)
+    value_chars = []
+    while point <= line.length - 1 && line[point] =~ /\d/
+      value_chars << line[point]
+      point += 1
+    end
+    value_chars.join('')
   end
 
-  def touching_numbers(index)
-    prev = index.zero? ? nil : @lines[index - 1]
-    current = @lines[index]
-    future = index == @lines.length - 1 ? nil : @lines[index + 1]
+  def determine_validity(numbers)
+    numbers.each do |num|
+      line_range = [*[num[:line] - 1, 0].max..[num[:line] + 1, @lines.length - 1].min]
+      char_range = [*[num[:start] - 1, 0].max..[num[:end] + 1, @lines[0].length - 1].min]
+      symbols = @tracked.filter do |obj|
+        obj[:type] == 'symbol' && line_range.include?(obj[:line]) && char_range.include?(obj[:start])
+      end
 
-    syms = current.scan(/[^1-9\.]/)
-    sym_pos = syms.map { |sym| current.index(sym) }
-
-    sym_pos.each do |i|
-      # left
-      puts ''
-      p index
-      p '>>> LEFT'
-      puts prev, current, future
-      if current[i - 1] =~ /[1-9]/ && i != 0
-        number = current[0...i].scan(/\d+/)[-1]
-        @nums << number.to_i
-        @lines[index][(i - number.length), number.length] = '.' * number.length
-      end
-      p @nums
-      # right
-      puts ''
-      p '>>> RIGHT'
-      puts prev, current, future
-      if current[i + 1] =~ /[1-9]/ && i != current.length - 1
-        number = current[(i + 1)..].scan(/\d+/)[0]
-        @nums << number.to_i
-        @lines[index][(i + 1), number.length] = '.' * number.length
-      end
-      p @nums
-      # prev left/up
-      puts ''
-      p '>>> PREV L/U'
-      puts prev, current, future
-      if !prev.nil? && prev[(i - 1)..i] =~ /[1-9]/
-        point_l = i - 1
-        point_r = i
-        build = []
-        until number
-          if i != 0 && prev[point_l] =~ /[1-9]/
-            build.unshift(prev[point_l])
-            point_l -= 1
-          elsif prev[point_r] =~ /[1-9]/
-            build.push(prev[point_r])
-            point_r += 1
-          else
-            number = build.join('')
-          end
-        end
-        @nums << number.to_i
-        @lines[index - 1][point_l + 1, number.length] = '.' * number.length
-      end
-      p @nums
-      # prev right
-      puts ''
-      p '>>> PREV R'
-      puts prev, current, future
-      if !prev.nil? && prev[i + 1] =~ /[1-9]/ && i != prev.length - 1
-        number = prev[(i + 1)..].scan(/\d+/)[0]
-        @nums << number.to_i
-        @lines[index - 1][(i + 1), number.length] = '.' * number.length
-      end
-      p @nums
-      # future left/up
-      puts ''
-      p '>>> FUTURE L/U'
-      puts prev, current, future
-      if !future.nil? && future[(i - 1)..i] =~ /[1-9]/
-        point_l = i - 1
-        point_r = i
-        build = []
-        number = nil
-        until number
-          if i != 0 && future[point_l] =~ /[1-9]/
-            build.unshift(future[point_l])
-            point_l -= 1
-          elsif future[point_r] =~ /[1-9]/
-            build.push(future[point_r])
-            point_r += 1
-          else
-            number = build.join('')
-          end
-        end
-        @nums << number.to_i
-        @lines[index + 1][point_l + 1, number.length] = '.' * number.length
-      end
-      p @nums
-      # future right
-      puts ''
-      p '>>> FUTURE R'
-      puts prev, current, future
-      if !future.nil? && future[i + 1] =~ /[1-9]/ && i != future.length - 1
-        number = future[(i + 1)..].scan(/\d+/)[0]
-        @nums << number.to_i
-        @lines[index + 1][(i + 1), number.length] = '.' * number.length
-      end
-      p @nums
-
-      # sleep(30)
+      @nums << num[:value].to_i unless symbols.empty?
     end
   end
 end
@@ -359,4 +234,3 @@ day3 = Day3.new
 
 # p day3.decode(SAMPLE_INPUT)
 p day3.decode(MY_INPUT)
-# p day3.decode(PROBLEMS)
