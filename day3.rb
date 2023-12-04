@@ -14,7 +14,7 @@ SAMPLE_INPUT =
 "
 
 MY_INPUT =
-  ".....489............................152....503.........................180......200.........147.......13.......................239..........
+".....489............................152....503.........................180......200.........147.......13.......................239..........
 ......*.....186.48....681...732........*..................935.........*.....................*......................512............*..874....
 ..806.540......*.........*............249......904...358....*......957..867..863..........857.....264..............@....89=......97..*......
 ......................793........................*...=.....142...........*..*....%...................@......+...............36.......547....
@@ -156,18 +156,101 @@ MY_INPUT =
 ...832..383...287.........................216....103...........710..................958...................288...............................
 "
 
+PROBLEMS =
+"...............*.................*...........................@.......&.............................-................=./.....................
+....319.606...566..../........+...63..........*........=....543...$..............................%.............3..64........................
+......$...............................................................................&.........................#...................@.......
+........#......#....*..................................*..........*............-.......*...............................................%....
+.........400....538..454.@............../......138....402.....775.959...................210.990......%...................338*33.......585...
+.....................................*........*................*...........=................-.............@.................................
+..........................*..................*...................*..........*.......................@................*..................*...
+.........$..............#..817..424*89...&.117......../.....2..243.....................................279*143..866..458............623.170.
+...........................................................-.........................../...........................................@........
+"
+
+# 3
+# 33
+# 2
+
 # AoC: Day 3
 class Day3
-  def decode(input)
+  def initialize
     @nums = []
+  end
 
+  def decode(input)
     @lines = input.split("\n")
-    @lines.each_with_index { |line, index| touching_numbers(index) if line =~ /[^1-9\.]/ }
-
+    p @lines
+    sleep(300)
+    @lines.each_with_index { |_, index| get_numbers(index) }
     @nums.sum
   end
 
   private
+
+  def get_numbers(index)
+    return if index.zero?
+    three_lines = [
+      index.zero? ? nil : @lines[index - 1],
+      @lines[index],
+      index == @lines.length - 1 ? nil : @lines[index + 1]
+    ]
+
+    numbers = three_lines[1].scan(/[0-9]+/)
+    # numbers.map! { |num| [num, three_lines[1].index(num)] }
+    indexed_numbers = []
+    numbers.each do |num|
+      prev = indexed_numbers.empty? ? nil : indexed_numbers[-1]
+      start = prev ? prev[1] + prev[0].length : 0
+      removed = prev ? three_lines[1][0...start].length : 0
+
+      index_in_line = three_lines[1][start..].index(num) + removed
+      indexed_numbers << [num, index_in_line]
+    end
+    # sleep(10)
+    check_for_symbols(indexed_numbers, three_lines, index)
+  end
+
+  def check_for_symbols(numbers, three_lines, index)
+    numbers.each do |num|
+      range = [
+        [num[1] - 1, 0].max,
+        [num[1] + num[0].length, three_lines[1].length - 1].min
+      ]
+      touch_symbols = []
+      valid = false
+
+
+      # puts '', '----------'
+      three_lines.each do |line|
+        next if line.nil? || valid
+
+        scans = line[range[0]..range[1]].scan(/[^0-9\.]/)
+        touch_symbols << scans
+        # puts "#{line[range[0]..range[1]]}  # #{scans}"
+      end
+      # puts touch_symbols.flatten.empty? ? '            -X-X-X-X-X-X-' : "      add (#{num[0]})"
+      # sleep(1)
+      if touch_symbols.flatten.empty? # ////////////////////////
+        puts '', '----------'
+        three_lines.each do |line|
+          next if line.nil?
+          puts "#{line[range[0]..range[1]]}"
+        end
+      end
+
+
+      @nums << num[0].to_i unless touch_symbols.flatten.empty?
+      delete_num(num, index)
+    end
+  end
+
+  def delete_num(num, index)
+    p @lines[index]
+    @lines[index][num[1], num[0].length] = '.' * num[0].length
+    p @lines[index]
+    # sleep(1)
+  end
 
   def touching_numbers(index)
     prev = index.zero? ? nil : @lines[index - 1]
@@ -276,3 +359,4 @@ day3 = Day3.new
 
 # p day3.decode(SAMPLE_INPUT)
 p day3.decode(MY_INPUT)
+# p day3.decode(PROBLEMS)
