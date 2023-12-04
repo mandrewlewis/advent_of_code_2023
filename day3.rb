@@ -175,11 +175,13 @@ class Day3
     @nums = []
   end
 
-  def decode(input)
+  def decode(input, part2: false)
     @lines = input.split("\n")
     @lines.each_with_index { |line, index| parse_line(line, index) }
     numbers = @tracked.select { |obj| obj[:type] == 'number' }
-    determine_validity(numbers)
+    stars = @tracked.select { |obj| obj[:value] == '*' }
+
+    part2 ? determine_gears(stars) : determine_validity(numbers)
 
     @nums.sum
   end
@@ -228,9 +230,28 @@ class Day3
       @nums << num[:value].to_i unless symbols.empty?
     end
   end
+
+  def determine_gears(stars)
+    stars.each do |star|
+      line_range = [*[star[:line] - 1, 0].max..[star[:line] + 1, @lines.length - 1].min]
+      char_range = [*[star[:start] - 1, 0].max..[star[:end] + 1, @lines[0].length - 1].min]
+      adj_numbers = @tracked.filter do |obj|
+        number_indexes = [*obj[:start]..obj[:end]]
+        number_in_row = obj[:type] == 'number' && line_range.include?(obj[:line])
+        number_in_column = char_range.any? { |char| number_indexes.include?(char) }
+
+        number_in_row && number_in_column
+      end
+
+      @nums << adj_numbers[0][:value].to_i * adj_numbers[1][:value].to_i if adj_numbers.length == 2
+    end
+  end
 end
 
 day3 = Day3.new
 
 # p day3.decode(SAMPLE_INPUT)
-p day3.decode(MY_INPUT)
+# p day3.decode(MY_INPUT)
+
+# p day3.decode(SAMPLE_INPUT, part2: true)
+p day3.decode(MY_INPUT, part2: true)
