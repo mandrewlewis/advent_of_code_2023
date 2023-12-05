@@ -250,7 +250,7 @@ class Day5
   def compute(input, part2: false)
     @part2 = part2
     seeds, maps = clean_input(input)
-    traverse(seeds, maps)
+    @part2 ? traverse2(seeds, maps) : traverse(seeds, maps)
   end
 
   private
@@ -258,7 +258,7 @@ class Day5
   def clean_input(input)
     maps = input.split("\n\n")
     part1_seeds = maps.shift[6..].scan(/\d+/).map!(&:to_i)
-    part2_seeds = part1_seeds
+    part2_seeds = part1_seeds.each_slice(2).to_a
     maps.map! do |map|
       lines = map.split("\n")
       lines.shift
@@ -292,12 +292,67 @@ class Day5
 
     locations.min
   end
+
+  def traverse2(seed_pairs, maps)
+    locations = []
+
+    extreme_seeds = []
+    seed_pairs.each_with_index do |pair, i|
+      extreme_seeds << {
+        id: i,
+        start: pair[0],
+        end: (pair[0] + pair[1] - 1)
+      }
+    end
+
+    extreme_seeds.each do |obj|
+      2.times do |i|
+        value = i.zero? ? obj[:start] : obj[:end]
+
+        maps.each do |map|
+          map.each do |range|
+            input_range = range[0]..(range[0] + range[2] - 1)
+            if input_range.include?(value)
+              value = range[1] + (value - range[0])
+              break
+            end
+          end
+        end
+        locations << [value, obj[:id]]
+      end
+    end
+
+
+
+
+    lowest_id = locations.min_by { |pair| pair[0] }
+
+    seed_obj = extreme_seeds.select { |obj| obj[:id] == lowest_id[1] }[0]
+    start_end = [seed_obj[:start], seed_obj[:end]]
+    midpoint = start_end.sum / 2
+
+    len_to_mid_exclude = midpoint - start_end[0]
+    len_mid_to_end = start_end[1] - midpoint + 1
+
+    seed_pairs = []
+    seed_pairs << [start_end[0], len_to_mid_exclude]
+    seed_pairs << [midpoint, len_mid_to_end]
+
+
+    if start_end[0] == midpoint
+      traverse(start_end, maps)
+    else
+      traverse2(seed_pairs, maps)
+    end
+  end
 end
 
 day = Day5.new
 
-p day.compute(SAMPLE_INPUT)
+# p day.compute(SAMPLE_INPUT)
 # p day.compute(MY_INPUT)
 
 # p day.compute(SAMPLE_INPUT, part2: true)
-# p day.compute(MY_INPUT, part2: true)
+p day.compute(MY_INPUT, part2: true)
+
+# 194601276 too high!
