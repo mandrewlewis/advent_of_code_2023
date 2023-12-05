@@ -247,11 +247,8 @@ humidity-to-location map:
 
 # AoC Day5
 class Day5
-  def initialize
-
-  end
-
   def compute(input, part2: false)
+    @part2 = part2
     seeds, maps = clean_input(input)
     traverse(seeds, maps)
   end
@@ -260,10 +257,11 @@ class Day5
 
   def clean_input(input)
     maps = input.split("\n\n")
-    seeds = maps.shift[6..].scan(/\d+/).map!(&:to_i)
+    part1_seeds = maps.shift[6..].scan(/\d+/).map!(&:to_i)
+    part2_seeds = part1_seeds
     maps.map! do |map|
       lines = map.split("\n")
-      source_dest = lines.shift[0...-5].split('-to-')
+      lines.shift
       ranges = []
 
       lines.each do |line|
@@ -271,13 +269,9 @@ class Day5
         data.map!(&:to_i)
         ranges << [data[1], data[0], data[2]]
       end
-
-      {
-        source: source_dest[0],
-        destination: source_dest[1],
-        ranges: ranges
-      }
+      ranges
     end
+    seeds = @part2 ? part2_seeds : part1_seeds
     [seeds, maps]
   end
 
@@ -285,7 +279,7 @@ class Day5
     locations = []
     seeds.each do |value|
       maps.each do |map|
-        map[:ranges].each do |range|
+        map.each do |range|
           input_range = range[0]..(range[0] + range[2] - 1)
           if input_range.include?(value)
             value = range[1] + (value - range[0])
@@ -302,8 +296,8 @@ end
 
 day = Day5.new
 
-# p day.compute(SAMPLE_INPUT)
-p day.compute(MY_INPUT)
+p day.compute(SAMPLE_INPUT)
+# p day.compute(MY_INPUT)
 
 # p day.compute(SAMPLE_INPUT, part2: true)
 # p day.compute(MY_INPUT, part2: true)
