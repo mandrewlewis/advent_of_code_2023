@@ -1,24 +1,7 @@
 # frozen_string_literal: true
 
-SAMPLE_INPUT =
-"Time:      7  15   30
-Distance:  9  40  200
-"
-
-SAMPLE_INPUT2 =
-"Time:      71530
-Distance:  940200
-"
-
-MY_INPUT =
-"Time:        41     77     70     96
-Distance:   249   1362   1127   1011
-"
-
-MY_INPUT2 =
-"Time:        41777096
-Distance:   249136211271011
-"
+require './inputs/day6_input'
+include Day6Input
 
 # AoC Day6
 class Day6
@@ -51,8 +34,8 @@ end
 
 day = Day6.new
 
-# p day.compute(SAMPLE_INPUT)
-# p day.compute(MY_INPUT)
+# p day.compute(SAMPLE)
+# p day.compute(MAIN)
 
-# p day.compute(SAMPLE_INPUT2, part2: true)
-p day.compute(MY_INPUT2, part2: true)
+# p day.compute(SAMPLE2, part2: true)
+p day.compute(MAIN2, part2: true)
