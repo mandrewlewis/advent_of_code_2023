@@ -259,6 +259,8 @@ class Day5
     maps = input.split("\n\n")
     part1_seeds = maps.shift[6..].scan(/\d+/).map!(&:to_i)
     part2_seeds = part1_seeds.each_slice(2).to_a
+    part2_seeds.map! { |pair| pair[0]..(pair[0] + pair[1] - 1) }
+
     maps.map! do |map|
       lines = map.split("\n")
       lines.shift
@@ -293,57 +295,45 @@ class Day5
     locations.min
   end
 
-  def traverse2(seed_pairs, maps)
-    locations = []
+  def traverse2(seed_ranges, maps)
+    maps.each do |map|
+      converted_ranges = []
+      until seed_ranges.empty?
+        seed_range = seed_ranges.shift
 
-    extreme_seeds = []
-    seed_pairs.each_with_index do |pair, i|
-      extreme_seeds << {
-        id: i,
-        start: pair[0],
-        end: (pair[0] + pair[1] - 1)
-      }
-    end
-
-    extreme_seeds.each do |obj|
-      2.times do |i|
-        value = i.zero? ? obj[:start] : obj[:end]
-
-        maps.each do |map|
-          map.each do |range|
-            input_range = range[0]..(range[0] + range[2] - 1)
-            if input_range.include?(value)
-              value = range[1] + (value - range[0])
-              break
-            end
-          end
+        map_ranges = map.map do |range_codes|
+          input_range = range_codes[0]..(range_codes[0] + range_codes[2] - 1)
+          output_range = range_codes[1]..(range_codes[1] + range_codes[2] - 1)
+          [input_range, output_range]
         end
-        locations << [value, obj[:id]]
+
+        map_ranges.each_with_index do |range, i|
+          intersect = [seed_range.min, range[0].min].max..[seed_range.max, range[0].max].min
+          unless intersect.min.nil?
+            left = seed_range.min == intersect.min ? nil : seed_range.min..(intersect.min - 1)
+            right = seed_range.max == intersect.max ? nil : (intersect.max + 1)..seed_range.max
+
+            converted_ranges << in_to_out(intersect, range)
+            seed_ranges << left unless left.nil?
+            seed_ranges << right unless right.nil?
+            break
+          end
+
+          converted_ranges << seed_range if i == map_ranges.length - 1
+        end
       end
+      seed_ranges = converted_ranges
     end
 
+    seed_ranges.min_by(&:min).min
+  end
 
-
-
-    lowest_id = locations.min_by { |pair| pair[0] }
-
-    seed_obj = extreme_seeds.select { |obj| obj[:id] == lowest_id[1] }[0]
-    start_end = [seed_obj[:start], seed_obj[:end]]
-    midpoint = start_end.sum / 2
-
-    len_to_mid_exclude = midpoint - start_end[0]
-    len_mid_to_end = start_end[1] - midpoint + 1
-
-    seed_pairs = []
-    seed_pairs << [start_end[0], len_to_mid_exclude]
-    seed_pairs << [midpoint, len_mid_to_end]
-
-
-    if start_end[0] == midpoint
-      traverse(start_end, maps)
-    else
-      traverse2(seed_pairs, maps)
-    end
+  def in_to_out(intersect, range)
+    low_diff = intersect.min - range[0].min
+    high_diff = range[0].max - intersect.max
+    min = range[1].min + low_diff
+    max = range[1].max - high_diff
+    min..max
   end
 end
 
@@ -354,5 +344,3 @@ day = Day5.new
 
 # p day.compute(SAMPLE_INPUT, part2: true)
 p day.compute(MY_INPUT, part2: true)
-
-# 194601276 too high!
