@@ -5,9 +5,19 @@ SAMPLE_INPUT =
 Distance:  9  40  200
 "
 
+SAMPLE_INPUT2 =
+"Time:      71530
+Distance:  940200
+"
+
 MY_INPUT =
 "Time:        41     77     70     96
 Distance:   249   1362   1127   1011
+"
+
+MY_INPUT2 =
+"Time:        41777096
+Distance:   249136211271011
 "
 
 # AoC Day6
@@ -42,7 +52,7 @@ end
 day = Day6.new
 
 # p day.compute(SAMPLE_INPUT)
-p day.compute(MY_INPUT)
+# p day.compute(MY_INPUT)
 
-# p day.compute(SAMPLE_INPUT, part2: true)
-# p day.compute(MY_INPUT, part2: true)
+# p day.compute(SAMPLE_INPUT2, part2: true)
+p day.compute(MY_INPUT2, part2: true)
