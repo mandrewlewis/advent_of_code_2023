@@ -14,19 +14,20 @@ TYPES = %w[
 ].freeze
 
 CARDS = %w[A K Q J T 9 8 7 6 5 4 3 2].freeze
+CARDS2 = %w[A K Q T 9 8 7 6 5 4 3 2 J].freeze
 
-# AoC DayX
-class DayX
+# AoC Day7
+class Day7
   def compute(input, part2: false)
     hands = clean_input(input)
-    hands.each { |hand| hand << get_type(hand[0]) }
+    hands.each { |hand| hand << get_type(hand[0], part2) }
 
     sorted_hands = []
     TYPES.each do |type|
       hands_of_type = hands.select { |hand| hand[-1] == type }
       next if hands_of_type.empty?
 
-      sorted_hands << sort_hands(hands_of_type)
+      sorted_hands << sort_hands(hands_of_type, part2)
     end
 
     sorted_hands.flatten!(1)
@@ -39,8 +40,18 @@ class DayX
     input.split("\n").map { |line| line.split(' ') }
   end
 
-  def get_type(hand)
-    card_counts = CARDS.map { |card| hand.scan(/#{card}/).length }.reject(&:zero?)
+  def get_type(hand, part2)
+    cards = part2 ? CARDS2 : CARDS
+    card_counts = cards.map { |card| hand.scan(/#{card}/).length }
+
+    if part2 && !card_counts[-1].zero?
+      joker_count = card_counts.pop
+      max_index = card_counts.index(card_counts.max)
+      card_counts[max_index] += joker_count
+      card_counts << 0
+    end
+
+    card_counts.reject!(&:zero?)
     case card_counts.length
     when 1
       'five_kind'
@@ -55,32 +66,31 @@ class DayX
     end
   end
 
-  def sort_hands(hands)
+  def sort_hands(hands, part2 = false)
+    cards = part2 ? CARDS2 : CARDS
+
     hands.sort do |a, b|
       order = nil
       5.times do |i|
         next if a[0][i] == b[0][i]
 
-        order = CARDS.index(a[0][i]) < CARDS.index(b[0][i]) ? -1 : 1 if order.nil?
+        order = cards.index(a[0][i]) < cards.index(b[0][i]) ? -1 : 1 if order.nil?
       end
-      order || a <=> b
+      order || 0
     end
   end
 
   def add_scores(hands)
     score = 0
-    hands.reverse.each_with_index do |hand, i|
-      multiplier = i + 1
-      score += hand[1].to_i * multiplier
-    end
+    hands.reverse.each_with_index { |hand, i| score += hand[1].to_i * (i + 1) }
     score
   end
 end
 
-day = DayX.new
+day = Day7.new
 
 # p day.compute(SAMPLE)
-p day.compute(MAIN)
+# p day.compute(MAIN)
 
 # p day.compute(SAMPLE, part2: true)
-# p day.compute(MAIN, part2: true)
+p day.compute(MAIN, part2: true)
