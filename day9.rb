@@ -9,15 +9,19 @@ class Day9
     predictions = []
     reports = clean_input(input)
 
-    reports.each do |report|
-      sum = 0
-      Kernel.loop do
-        sum += report[-1]
-        report = differences(report)
-        break if report.length < 1
+    unless part2
+      reports.each do |report|
+        sum = 0
+        Kernel.loop do
+          sum += report[-1]
+          report = differences(report)
+          break if report.length < 1
+        end
+        predictions << sum
       end
-      predictions << sum
     end
+
+    reports.each { |report| predictions << differences2(report) } if part2
 
     predictions.sum
   end
@@ -32,12 +36,20 @@ class Day9
     num_array = report.each_with_index.map { |num, i| report[i + 1] - num unless i == report.length - 1 }
     num_array[0...-1]
   end
+
+  def differences2(report)
+    return report[0] if report.uniq.length == 1
+
+    diffs = report.each_with_index.map { |num, i| report[i + 1] - num unless i == report.length - 1 }
+    return_val = differences2(diffs[0...-1])
+    -(return_val - report[0])
+  end
 end
 
 day = Day9.new
 
 # p day.compute(SAMPLE)
-p day.compute(MAIN)
+# p day.compute(MAIN)
 
 # p day.compute(SAMPLE, part2: true)
-# p day.compute(MAIN, part2: true)
+p day.compute(MAIN, part2: true)
