@@ -19,7 +19,14 @@ class Day10
   def compute(input, part2: false)
     @lines = clean_input(input)
     neighbors = initial_neighbors(nil, nil)
-    navigate(neighbors)
+    depth = navigate(neighbors)
+
+    if part2
+      @count = 0
+      count_enclosed
+    end
+
+    part2 ? @count : depth
   end
 
   private
@@ -28,8 +35,32 @@ class Day10
     input.split("\n").map(&:chars)
   end
 
+  def count_enclosed
+    @lines.each_with_index do |line, l_i|
+      open = false
+      prev_sym = nil
+      line.each_with_index do |char, c_i|
+        next if char == '-' && %w[L F].include?(prev_sym)
+
+        if %w[L 7 F J |].include?(char) && @mapped.include?([l_i, c_i])
+          next if (prev_sym == 'L' && char == '7') || (prev_sym == 'F' && char == 'J')
+
+          prev_sym = char
+          open = !open
+          next
+        end
+
+        @count += 1 if open
+        # |,L,J,7,F all OPEN/CLOSE
+        # DO NOT CLOSE PAIRS: L7, FJ
+      end
+    end
+  end
+
   def initial_neighbors(start_r, start_c)
     neighbors = []
+    @mapped = []
+    start_r, start_c = nil
     @lines.each_with_index do |line, i|
       next unless line.include?('S')
 
@@ -51,6 +82,8 @@ class Day10
       neighbors << [start_r, start_c + 1, 3]
     end
 
+    replace_s(neighbors, start_r, start_c)
+    neighbors.each { |coord| @mapped.push(coord[0..1]) }
     neighbors
   end
 
@@ -78,9 +111,30 @@ class Day10
       neighbors.map! do |coords|
         get_next(coords)
       end
+      neighbors.each { |coord| @mapped.push(coord[0..1]) }
       depth += 1
     end
     depth
+  end
+
+  def replace_s(neighbors, start_r, start_c)
+    dirs = neighbors.map { |dir| flip_dir(dir[-1]) }.sort
+    @mapped.unshift([start_r, start_c])
+
+    case dirs
+    when [1, 3]
+      @lines[start_r][start_c] = '-'
+    when [0, 1]
+      @lines[start_r][start_c] = 'L'
+    when [2, 3]
+      @lines[start_r][start_c] = '7'
+    when [1, 2]
+      @lines[start_r][start_c] = 'F'
+    when [0, 3]
+      @lines[start_r][start_c] = 'J'
+    when [0, 2]
+      @lines[start_r][start_c] = '|'
+    end
   end
 
   def flip_dir(dir)
@@ -90,9 +144,11 @@ end
 
 day = Day10.new
 
-# p day.compute(SAMPLE1)
+# p day.compute(SAMPLE)
 # p day.compute(SAMPLE2)
-p day.compute(MAIN)
+# p day.compute(MAIN)
 
 # p day.compute(SAMPLE, part2: true)
-# p day.compute(MAIN, part2: true)
+# p day.compute(SAMPLE2, part2: true)
+# p day.compute(SAMPLE3, part2: true)
+p day.compute(MAIN, part2: true) # 328 too low
